@@ -1,11 +1,11 @@
-# gzh-core
+# gzh-cli-core
 
 Shared core library for gzh-cli-* tools.
 
 ## Installation
 
 ```bash
-go get github.com/gizzahub/gzh-core
+go get github.com/gizzahub/gzh-cli-core
 ```
 
 ## Packages
@@ -24,7 +24,7 @@ go get github.com/gizzahub/gzh-core
 ### Logger
 
 ```go
-import "github.com/gizzahub/gzh-core/logger"
+import "github.com/gizzahub/gzh-cli-core/logger"
 
 // Create named logger
 log := logger.New("myapp")
@@ -45,7 +45,7 @@ logger.Info("using global logger")
 ### TestUtil
 
 ```go
-import "github.com/gizzahub/gzh-core/testutil"
+import "github.com/gizzahub/gzh-cli-core/testutil"
 
 func TestExample(t *testing.T) {
     // Temp files
@@ -71,7 +71,7 @@ func TestExample(t *testing.T) {
 ### Errors
 
 ```go
-import "github.com/gizzahub/gzh-core/errors"
+import "github.com/gizzahub/gzh-cli-core/errors"
 
 // Sentinel errors
 if errors.Is(err, errors.ErrNotFound) {
@@ -91,7 +91,7 @@ return errors.Range("port", 1, 65535)
 ### Config
 
 ```go
-import "github.com/gizzahub/gzh-core/config"
+import "github.com/gizzahub/gzh-cli-core/config"
 
 type AppConfig struct {
     Name string `yaml:"name"`
@@ -114,7 +114,7 @@ timeout := config.GetEnvDurationOr("TIMEOUT", 30*time.Second)
 ### CLI
 
 ```go
-import "github.com/gizzahub/gzh-core/cli"
+import "github.com/gizzahub/gzh-cli-core/cli"
 
 func main() {
     root := cli.NewRootCmd(cli.RootConfig{
@@ -138,7 +138,7 @@ cli.Warning("Deprecated feature")
 ### Version
 
 ```go
-import "github.com/gizzahub/gzh-core/version"
+import "github.com/gizzahub/gzh-cli-core/version"
 
 // Get version info
 info := version.Get()
@@ -147,7 +147,7 @@ fmt.Println(info.Short())   // Just version number
 fmt.Println(info.Full())    // Version with git commit
 
 // Build with ldflags
-// go build -ldflags "-X github.com/gizzahub/gzh-core/version.Version=1.0.0 ..."
+// go build -ldflags "-X github.com/gizzahub/gzh-cli-core/version.Version=1.0.0 ..."
 ```
 
 ## Development

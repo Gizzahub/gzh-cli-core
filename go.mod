@@ -1,4 +1,4 @@
-module github.com/gizzahub/gzh-core
+module github.com/gizzahub/gzh-cli-core
 
 go 1.24.0
 

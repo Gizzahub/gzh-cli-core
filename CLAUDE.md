@@ -6,7 +6,7 @@ This file provides LLM-optimized guidance for Claude Code when working with this
 
 ## Project Context
 
-**Module**: `github.com/gizzahub/gzh-core`
+**Module**: `github.com/gizzahub/gzh-cli-core`
 **Type**: Shared library for gzh-cli-* tools
 **Go Version**: 1.24+
 
@@ -74,7 +74,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ## Project Structure
 
 ```
-gzh-core/
+gzh-cli-core/
 ├── logger/          # Structured logging
 │   ├── logger.go    # Logger interface & SimpleLogger
 │   ├── global.go    # Default logger functions
@@ -111,13 +111,13 @@ gzh-core/
 
 ```go
 // go.mod
-require github.com/gizzahub/gzh-core v0.1.0
+require github.com/gizzahub/gzh-cli-core v0.1.0
 
 // Import packages as needed
 import (
-    "github.com/gizzahub/gzh-core/logger"
-    "github.com/gizzahub/gzh-core/errors"
-    "github.com/gizzahub/gzh-core/config"
+    "github.com/gizzahub/gzh-cli-core/logger"
+    "github.com/gizzahub/gzh-cli-core/errors"
+    "github.com/gizzahub/gzh-cli-core/config"
 )
 ```
 
