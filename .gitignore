@@ -1,0 +1,26 @@
+# AI Tools
+.serena/
+
+# Build
+build/
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+*.out
+coverage.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Temp
+tmp/
+*.tmp
+*.log
