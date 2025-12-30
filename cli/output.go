@@ -43,9 +43,22 @@ func (o *Output) Print(data interface{}) error {
 		return o.printJSON(data)
 	case "yaml", "yml":
 		return o.printYAML(data)
+	case "llm":
+		return o.printLLM(data)
 	default:
 		return o.printText(data)
 	}
+}
+
+// printLLM prints data in LLM-friendly compact format.
+func (o *Output) printLLM(data interface{}) error {
+	formatter := &llmFormatter{}
+	output := formatter.format(data, 0)
+	if output == "" {
+		return nil
+	}
+	_, err := fmt.Fprint(o.writer, output)
+	return err
 }
 
 func (o *Output) printJSON(data interface{}) error {
