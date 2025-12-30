@@ -184,7 +184,7 @@ func (l *NopLogger) Error(msg string, args ...interface{}) {}
 func (l *NopLogger) WithContext(key string, value interface{}) Logger {
 	return l
 }
-func (l *NopLogger) SetLevel(level Level)   {}
+func (l *NopLogger) SetLevel(level Level)  {}
 func (l *NopLogger) SetOutput(w io.Writer) {}
 
 // Ensure interfaces are implemented.

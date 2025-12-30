@@ -81,9 +81,9 @@ func TestInfo_Short(t *testing.T) {
 
 func TestInfo_Full(t *testing.T) {
 	tests := []struct {
-		name      string
-		info      Info
-		expected  string
+		name     string
+		info     Info
+		expected string
 	}{
 		{
 			name:     "with commit",
