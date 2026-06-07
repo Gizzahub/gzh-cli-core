@@ -4,7 +4,9 @@ package logger
 import (
 	"fmt"
 	"io"
+	"maps"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -53,11 +55,11 @@ func ParseLevel(s string) Level {
 
 // Logger defines the logging interface.
 type Logger interface {
-	Debug(msg string, args ...interface{})
-	Info(msg string, args ...interface{})
-	Warn(msg string, args ...interface{})
-	Error(msg string, args ...interface{})
-	WithContext(key string, value interface{}) Logger
+	Debug(msg string, args ...any)
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
+	WithContext(key string, value any) Logger
 	SetLevel(level Level)
 	SetOutput(w io.Writer)
 }
@@ -68,7 +70,7 @@ type SimpleLogger struct {
 	name    string
 	level   Level
 	out     io.Writer
-	context map[string]interface{}
+	context map[string]any
 }
 
 // New creates a new SimpleLogger with the given name.
@@ -77,7 +79,7 @@ func New(name string) *SimpleLogger {
 		name:    name,
 		level:   LevelInfo,
 		out:     os.Stdout,
-		context: make(map[string]interface{}),
+		context: make(map[string]any),
 	}
 }
 
@@ -103,14 +105,12 @@ func (l *SimpleLogger) GetLevel() Level {
 }
 
 // WithContext returns a new logger with additional context.
-func (l *SimpleLogger) WithContext(key string, value interface{}) Logger {
+func (l *SimpleLogger) WithContext(key string, value any) Logger {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	newContext := make(map[string]interface{})
-	for k, v := range l.context {
-		newContext[k] = v
-	}
+	newContext := make(map[string]any)
+	maps.Copy(newContext, l.context)
 	newContext[key] = value
 
 	return &SimpleLogger{
@@ -121,7 +121,7 @@ func (l *SimpleLogger) WithContext(key string, value interface{}) Logger {
 	}
 }
 
-func (l *SimpleLogger) log(level Level, msg string, args ...interface{}) {
+func (l *SimpleLogger) log(level Level, msg string, args ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -132,40 +132,40 @@ func (l *SimpleLogger) log(level Level, msg string, args ...interface{}) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 
 	// Build context string.
-	contextStr := ""
+	var contextStr strings.Builder
 	for k, v := range l.context {
-		contextStr += fmt.Sprintf(" %s=%v", k, v)
+		contextStr.WriteString(fmt.Sprintf(" %s=%v", k, v))
 	}
 
 	// Build args string (key=value pairs).
-	argsStr := ""
+	var argsStr strings.Builder
 	for i := 0; i < len(args)-1; i += 2 {
 		if i+1 < len(args) {
-			argsStr += fmt.Sprintf(" %v=%v", args[i], args[i+1])
+			argsStr.WriteString(fmt.Sprintf(" %v=%v", args[i], args[i+1]))
 		}
 	}
 
 	fmt.Fprintf(l.out, "[%s] %s [%s]%s %s%s\n",
-		timestamp, level.String(), l.name, contextStr, msg, argsStr)
+		timestamp, level.String(), l.name, contextStr.String(), msg, argsStr.String())
 }
 
 // Debug logs a debug message.
-func (l *SimpleLogger) Debug(msg string, args ...interface{}) {
+func (l *SimpleLogger) Debug(msg string, args ...any) {
 	l.log(LevelDebug, msg, args...)
 }
 
 // Info logs an info message.
-func (l *SimpleLogger) Info(msg string, args ...interface{}) {
+func (l *SimpleLogger) Info(msg string, args ...any) {
 	l.log(LevelInfo, msg, args...)
 }
 
 // Warn logs a warning message.
-func (l *SimpleLogger) Warn(msg string, args ...interface{}) {
+func (l *SimpleLogger) Warn(msg string, args ...any) {
 	l.log(LevelWarn, msg, args...)
 }
 
 // Error logs an error message.
-func (l *SimpleLogger) Error(msg string, args ...interface{}) {
+func (l *SimpleLogger) Error(msg string, args ...any) {
 	l.log(LevelError, msg, args...)
 }
 
@@ -177,11 +177,11 @@ func NewNop() *NopLogger {
 	return &NopLogger{}
 }
 
-func (l *NopLogger) Debug(msg string, args ...interface{}) {}
-func (l *NopLogger) Info(msg string, args ...interface{})  {}
-func (l *NopLogger) Warn(msg string, args ...interface{})  {}
-func (l *NopLogger) Error(msg string, args ...interface{}) {}
-func (l *NopLogger) WithContext(key string, value interface{}) Logger {
+func (l *NopLogger) Debug(msg string, args ...any) {}
+func (l *NopLogger) Info(msg string, args ...any)  {}
+func (l *NopLogger) Warn(msg string, args ...any)  {}
+func (l *NopLogger) Error(msg string, args ...any) {}
+func (l *NopLogger) WithContext(key string, value any) Logger {
 	return l
 }
 func (l *NopLogger) SetLevel(level Level)  {}

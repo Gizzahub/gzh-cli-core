@@ -37,7 +37,7 @@ func (o *Output) SetFormat(format string) *Output {
 }
 
 // Print prints data in the configured format.
-func (o *Output) Print(data interface{}) error {
+func (o *Output) Print(data any) error {
 	switch o.format {
 	case "json":
 		return o.printJSON(data)
@@ -51,7 +51,7 @@ func (o *Output) Print(data interface{}) error {
 }
 
 // printLLM prints data in LLM-friendly compact format.
-func (o *Output) printLLM(data interface{}) error {
+func (o *Output) printLLM(data any) error {
 	formatter := &llmFormatter{}
 	output := formatter.format(data, 0)
 	if output == "" {
@@ -61,45 +61,45 @@ func (o *Output) printLLM(data interface{}) error {
 	return err
 }
 
-func (o *Output) printJSON(data interface{}) error {
+func (o *Output) printJSON(data any) error {
 	enc := json.NewEncoder(o.writer)
 	enc.SetIndent("", "  ")
 	return enc.Encode(data)
 }
 
-func (o *Output) printYAML(data interface{}) error {
+func (o *Output) printYAML(data any) error {
 	enc := yaml.NewEncoder(o.writer)
 	enc.SetIndent(2)
 	return enc.Encode(data)
 }
 
-func (o *Output) printText(data interface{}) error {
+func (o *Output) printText(data any) error {
 	_, err := fmt.Fprintln(o.writer, data)
 	return err
 }
 
 // Success prints a success message with checkmark.
-func (o *Output) Success(msg string, args ...interface{}) {
+func (o *Output) Success(msg string, args ...any) {
 	fmt.Fprintf(o.writer, "✓ "+msg+"\n", args...)
 }
 
 // Error prints an error message with X mark.
-func (o *Output) Error(msg string, args ...interface{}) {
+func (o *Output) Error(msg string, args ...any) {
 	fmt.Fprintf(o.writer, "✗ "+msg+"\n", args...)
 }
 
 // Warning prints a warning message.
-func (o *Output) Warning(msg string, args ...interface{}) {
+func (o *Output) Warning(msg string, args ...any) {
 	fmt.Fprintf(o.writer, "⚠ "+msg+"\n", args...)
 }
 
 // Info prints an info message.
-func (o *Output) Info(msg string, args ...interface{}) {
+func (o *Output) Info(msg string, args ...any) {
 	fmt.Fprintf(o.writer, "ℹ "+msg+"\n", args...)
 }
 
 // Line prints a plain message.
-func (o *Output) Line(msg string, args ...interface{}) {
+func (o *Output) Line(msg string, args ...any) {
 	fmt.Fprintf(o.writer, msg+"\n", args...)
 }
 
@@ -113,22 +113,22 @@ func (o *Output) DryRun() {
 var defaultOutput = NewOutput()
 
 // Success prints a success message.
-func Success(msg string, args ...interface{}) {
+func Success(msg string, args ...any) {
 	defaultOutput.Success(msg, args...)
 }
 
 // Error prints an error message.
-func Error(msg string, args ...interface{}) {
+func Error(msg string, args ...any) {
 	defaultOutput.Error(msg, args...)
 }
 
 // Warning prints a warning message.
-func Warning(msg string, args ...interface{}) {
+func Warning(msg string, args ...any) {
 	defaultOutput.Warning(msg, args...)
 }
 
 // Info prints an info message.
-func Info(msg string, args ...interface{}) {
+func Info(msg string, args ...any) {
 	defaultOutput.Info(msg, args...)
 }
 

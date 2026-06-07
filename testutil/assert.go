@@ -34,7 +34,7 @@ func AssertErrorContains(t *testing.T, err error, substr string) {
 }
 
 // AssertEqual fails the test if got != want.
-func AssertEqual(t *testing.T, got, want interface{}) {
+func AssertEqual(t *testing.T, got, want any) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, want %v", got, want)
@@ -42,7 +42,7 @@ func AssertEqual(t *testing.T, got, want interface{}) {
 }
 
 // AssertNotEqual fails the test if got == want.
-func AssertNotEqual(t *testing.T, got, want interface{}) {
+func AssertNotEqual(t *testing.T, got, want any) {
 	t.Helper()
 	if reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, want not equal", got)
@@ -82,7 +82,7 @@ func AssertFalse(t *testing.T, condition bool, msg string) {
 }
 
 // AssertNil fails the test if value is not nil.
-func AssertNil(t *testing.T, value interface{}) {
+func AssertNil(t *testing.T, value any) {
 	t.Helper()
 	if value != nil && !reflect.ValueOf(value).IsNil() {
 		t.Errorf("expected nil, got %v", value)
@@ -90,7 +90,7 @@ func AssertNil(t *testing.T, value interface{}) {
 }
 
 // AssertNotNil fails the test if value is nil.
-func AssertNotNil(t *testing.T, value interface{}) {
+func AssertNotNil(t *testing.T, value any) {
 	t.Helper()
 	if value == nil || reflect.ValueOf(value).IsNil() {
 		t.Error("expected non-nil value")
@@ -98,7 +98,7 @@ func AssertNotNil(t *testing.T, value interface{}) {
 }
 
 // AssertLen fails the test if the length of v is not expected.
-func AssertLen(t *testing.T, v interface{}, expected int) {
+func AssertLen(t *testing.T, v any, expected int) {
 	t.Helper()
 	rv := reflect.ValueOf(v)
 	if rv.Len() != expected {
@@ -107,7 +107,7 @@ func AssertLen(t *testing.T, v interface{}, expected int) {
 }
 
 // AssertEmpty fails the test if v is not empty.
-func AssertEmpty(t *testing.T, v interface{}) {
+func AssertEmpty(t *testing.T, v any) {
 	t.Helper()
 	rv := reflect.ValueOf(v)
 	if rv.Len() != 0 {
@@ -116,7 +116,7 @@ func AssertEmpty(t *testing.T, v interface{}) {
 }
 
 // AssertNotEmpty fails the test if v is empty.
-func AssertNotEmpty(t *testing.T, v interface{}) {
+func AssertNotEmpty(t *testing.T, v any) {
 	t.Helper()
 	rv := reflect.ValueOf(v)
 	if rv.Len() == 0 {

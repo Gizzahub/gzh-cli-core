@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 )
@@ -182,13 +183,7 @@ func TestDefaultPaths(t *testing.T) {
 	}
 
 	// Should contain app-specific paths
-	foundYaml := false
-	for _, p := range paths {
-		if p == "testapp.yaml" {
-			foundYaml = true
-			break
-		}
-	}
+	foundYaml := slices.Contains(paths, "testapp.yaml")
 	if !foundYaml {
 		t.Error("expected 'testapp.yaml' in paths")
 	}

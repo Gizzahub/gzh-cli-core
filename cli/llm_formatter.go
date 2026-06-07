@@ -17,7 +17,7 @@ const (
 type llmFormatter struct{}
 
 // format converts any data to LLM-friendly string format.
-func (l *llmFormatter) format(data interface{}, depth int) string {
+func (l *llmFormatter) format(data any, depth int) string {
 	if data == nil {
 		return ""
 	}
@@ -32,7 +32,7 @@ func (l *llmFormatter) format(data interface{}, depth int) string {
 // formatValue handles reflect.Value formatting.
 func (l *llmFormatter) formatValue(v reflect.Value, depth int) string {
 	// Dereference pointers and interfaces
-	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+	for v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
 		if v.IsNil() {
 			return ""
 		}
@@ -201,7 +201,7 @@ func (l *llmFormatter) formatMap(v reflect.Value, depth int) string {
 // shouldSkipField returns true if the field should be omitted from output.
 func (l *llmFormatter) shouldSkipField(v reflect.Value) bool {
 	// Dereference pointers
-	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+	for v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
 		if v.IsNil() {
 			return true
 		}
@@ -306,7 +306,7 @@ func (l *llmFormatter) indent(depth int) string {
 
 // isComplexType checks if the value is a struct, slice, or map.
 func (l *llmFormatter) isComplexType(v reflect.Value) bool {
-	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+	for v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
 		if v.IsNil() {
 			return false
 		}

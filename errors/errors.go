@@ -53,7 +53,7 @@ func New(message string) error {
 }
 
 // Newf creates a new error with the formatted message.
-func Newf(format string, args ...interface{}) error {
+func Newf(format string, args ...any) error {
 	return fmt.Errorf(format, args...)
 }
 
@@ -63,7 +63,7 @@ func Is(err, target error) bool {
 }
 
 // As finds the first error in err's tree that matches target.
-func As(err error, target interface{}) bool {
+func As(err error, target any) bool {
 	return errors.As(err, target)
 }
 

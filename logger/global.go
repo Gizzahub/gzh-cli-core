@@ -27,21 +27,21 @@ func SetDefaultOutput(w io.Writer) {
 }
 
 // Debug logs a debug message using the default logger.
-func Debug(msg string, args ...interface{}) {
+func Debug(msg string, args ...any) {
 	defaultLogger.Debug(msg, args...)
 }
 
 // Info logs an info message using the default logger.
-func Info(msg string, args ...interface{}) {
+func Info(msg string, args ...any) {
 	defaultLogger.Info(msg, args...)
 }
 
 // Warn logs a warning message using the default logger.
-func Warn(msg string, args ...interface{}) {
+func Warn(msg string, args ...any) {
 	defaultLogger.Warn(msg, args...)
 }
 
 // Error logs an error message using the default logger.
-func Error(msg string, args ...interface{}) {
+func Error(msg string, args ...any) {
 	defaultLogger.Error(msg, args...)
 }

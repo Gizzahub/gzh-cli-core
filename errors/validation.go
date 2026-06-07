@@ -1,5 +1,7 @@
 package errors
 
+import "strings"
+
 import "fmt"
 
 // InvalidPath returns a standardized invalid path error.
@@ -26,20 +28,21 @@ func ValidationError(message string) error {
 }
 
 // ValidationErrorf returns a formatted validation error.
-func ValidationErrorf(format string, args ...interface{}) error {
+func ValidationErrorf(format string, args ...any) error {
 	return fmt.Errorf("validation error: %s", fmt.Sprintf(format, args...))
 }
 
 // RequiredFlag returns a standardized required flag error with optional examples.
 func RequiredFlag(flagName string, examples ...string) error {
-	msg := fmt.Sprintf("--%s flag is required", flagName)
+	var msg strings.Builder
+	msg.WriteString(fmt.Sprintf("--%s flag is required", flagName))
 	if len(examples) > 0 {
-		msg += "\n\nExamples:"
+		msg.WriteString("\n\nExamples:")
 		for _, ex := range examples {
-			msg += "\n  " + ex
+			msg.WriteString("\n  " + ex)
 		}
 	}
-	return fmt.Errorf("%s", msg)
+	return fmt.Errorf("%s", msg.String())
 }
 
 // MutuallyExclusive returns an error for mutually exclusive flags.
@@ -68,7 +71,7 @@ func EmptyValue(name string) error {
 }
 
 // InvalidValue returns an error for invalid values.
-func InvalidValue(name string, value interface{}, reason string) error {
+func InvalidValue(name string, value any, reason string) error {
 	if reason != "" {
 		return fmt.Errorf("invalid %s %q: %s", name, value, reason)
 	}

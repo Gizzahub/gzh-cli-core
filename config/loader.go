@@ -48,7 +48,7 @@ func (l *Loader) Paths() []string {
 
 // Load loads configuration from the first existing file in the search paths.
 // The dst must be a pointer to a struct.
-func (l *Loader) Load(dst interface{}) error {
+func (l *Loader) Load(dst any) error {
 	for _, path := range l.paths {
 		if _, err := os.Stat(path); err == nil {
 			return l.LoadFrom(path, dst)
@@ -58,7 +58,7 @@ func (l *Loader) Load(dst interface{}) error {
 }
 
 // LoadFrom loads configuration from a specific file path.
-func (l *Loader) LoadFrom(path string, dst interface{}) error {
+func (l *Loader) LoadFrom(path string, dst any) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read config file %s: %w", path, err)
@@ -73,7 +73,7 @@ func (l *Loader) LoadFrom(path string, dst interface{}) error {
 
 // LoadOrDefault loads configuration, returning nil error if no file found.
 // Caller should initialize dst with default values before calling.
-func (l *Loader) LoadOrDefault(dst interface{}) error {
+func (l *Loader) LoadOrDefault(dst any) error {
 	for _, path := range l.paths {
 		if _, err := os.Stat(path); err == nil {
 			return l.LoadFrom(path, dst)
@@ -124,7 +124,7 @@ func DefaultPaths(appName string) []string {
 }
 
 // Save saves configuration to the given path.
-func Save(path string, cfg interface{}) error {
+func Save(path string, cfg any) error {
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
