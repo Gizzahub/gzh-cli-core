@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	maxLLMDepth = 5
-	indentSize  = 2
+	maxLLMDepth   = 5
+	indentSize    = 2
+	depthEllipsis = "..."
 )
 
 // llmFormatter formats data in a token-efficient format for LLM consumption.
@@ -22,7 +23,7 @@ func (l *llmFormatter) format(data any, depth int) string {
 		return ""
 	}
 	if depth > maxLLMDepth {
-		return "..."
+		return depthEllipsis
 	}
 
 	v := reflect.ValueOf(data)
@@ -81,7 +82,7 @@ func (l *llmFormatter) formatValue(v reflect.Value, depth int) string {
 // formatStruct formats a struct with UPPER_CASE field labels.
 func (l *llmFormatter) formatStruct(v reflect.Value, depth int) string {
 	if depth > maxLLMDepth {
-		return "..."
+		return depthEllipsis
 	}
 
 	var sb strings.Builder
@@ -113,9 +114,9 @@ func (l *llmFormatter) formatStruct(v reflect.Value, depth int) string {
 
 		// Multi-line values (nested structs/slices) get indented on next line
 		if strings.Contains(formatted, "\n") {
-			sb.WriteString(fmt.Sprintf("%s%s:\n%s", indent, fieldLabel, formatted))
+			fmt.Fprintf(&sb, "%s%s:\n%s", indent, fieldLabel, formatted)
 		} else {
-			sb.WriteString(fmt.Sprintf("%s%s: %s\n", indent, fieldLabel, formatted))
+			fmt.Fprintf(&sb, "%s%s: %s\n", indent, fieldLabel, formatted)
 		}
 	}
 
@@ -129,7 +130,7 @@ func (l *llmFormatter) formatSlice(v reflect.Value, depth int) string {
 	}
 
 	if depth > maxLLMDepth {
-		return "..."
+		return depthEllipsis
 	}
 
 	var sb strings.Builder
@@ -155,7 +156,7 @@ func (l *llmFormatter) formatSlice(v reflect.Value, depth int) string {
 		formatted := l.formatValue(elem, depth+1)
 
 		if formatted != "" {
-			sb.WriteString(fmt.Sprintf("%s[%d]\n%s", l.indent(depth), i, formatted))
+			fmt.Fprintf(&sb, "%s[%d]\n%s", l.indent(depth), i, formatted)
 		}
 	}
 
@@ -169,7 +170,7 @@ func (l *llmFormatter) formatMap(v reflect.Value, depth int) string {
 	}
 
 	if depth > maxLLMDepth {
-		return "..."
+		return depthEllipsis
 	}
 
 	var sb strings.Builder
@@ -189,9 +190,9 @@ func (l *llmFormatter) formatMap(v reflect.Value, depth int) string {
 		indent := l.indent(depth)
 
 		if strings.Contains(valueStr, "\n") {
-			sb.WriteString(fmt.Sprintf("%s%s:\n%s", indent, keyStr, valueStr))
+			fmt.Fprintf(&sb, "%s%s:\n%s", indent, keyStr, valueStr)
 		} else {
-			sb.WriteString(fmt.Sprintf("%s%s: %s\n", indent, keyStr, valueStr))
+			fmt.Fprintf(&sb, "%s%s: %s\n", indent, keyStr, valueStr)
 		}
 	}
 
