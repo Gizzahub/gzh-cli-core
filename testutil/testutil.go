@@ -30,6 +30,7 @@ func TempFile(t *testing.T, name, content string) string {
 	t.Helper()
 	dir := TempDir(t)
 	path := filepath.Join(dir, name)
+	// #nosec G306 -- test helper writes non-secret fixtures; 0644 is intentional
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
@@ -41,9 +42,11 @@ func TempFile(t *testing.T, name, content string) string {
 func TempFileInDir(t *testing.T, dir, name, content string) string {
 	t.Helper()
 	path := filepath.Join(dir, name)
+	// #nosec G301 -- test helper creates temp dirs; 0755 is intentional
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("failed to create parent directory: %v", err)
 	}
+	// #nosec G306 -- test helper writes non-secret fixtures; 0644 is intentional
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
@@ -61,20 +64,32 @@ func Capture(fn func()) CaptureOutput {
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
 
-	rOut, wOut, _ := os.Pipe()
-	rErr, wErr, _ := os.Pipe()
+	rOut, wOut, err := os.Pipe()
+	if err != nil {
+		panic("testutil.Capture: failed to create stdout pipe: " + err.Error())
+	}
+	rErr, wErr, err := os.Pipe()
+	if err != nil {
+		panic("testutil.Capture: failed to create stderr pipe: " + err.Error())
+	}
 
 	os.Stdout = wOut
 	os.Stderr = wErr
 
 	fn()
 
-	wOut.Close()
-	wErr.Close()
+	// #nosec G104 -- close errors on pipe writers are non-actionable after capture
+	_ = wOut.Close()
+	// #nosec G104 -- close errors on pipe writers are non-actionable after capture
+	_ = wErr.Close()
 
 	var bufOut, bufErr bytes.Buffer
-	io.Copy(&bufOut, rOut)
-	io.Copy(&bufErr, rErr)
+	if _, err := io.Copy(&bufOut, rOut); err != nil {
+		panic("testutil.Capture: failed to read stdout: " + err.Error())
+	}
+	if _, err := io.Copy(&bufErr, rErr); err != nil {
+		panic("testutil.Capture: failed to read stderr: " + err.Error())
+	}
 
 	os.Stdout = oldStdout
 	os.Stderr = oldStderr
@@ -88,14 +103,20 @@ func Capture(fn func()) CaptureOutput {
 // CaptureStdout captures only stdout during the execution of fn.
 func CaptureStdout(fn func()) string {
 	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic("testutil.CaptureStdout: failed to create pipe: " + err.Error())
+	}
 	os.Stdout = w
 
 	fn()
 
-	w.Close()
+	// #nosec G104 -- close errors on pipe writers are non-actionable after capture
+	_ = w.Close()
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	if _, err := io.Copy(&buf, r); err != nil {
+		panic("testutil.CaptureStdout: failed to read stdout: " + err.Error())
+	}
 	os.Stdout = oldStdout
 
 	return buf.String()
@@ -104,14 +125,20 @@ func CaptureStdout(fn func()) string {
 // CaptureStderr captures only stderr during the execution of fn.
 func CaptureStderr(fn func()) string {
 	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic("testutil.CaptureStderr: failed to create pipe: " + err.Error())
+	}
 	os.Stderr = w
 
 	fn()
 
-	w.Close()
+	// #nosec G104 -- close errors on pipe writers are non-actionable after capture
+	_ = w.Close()
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	if _, err := io.Copy(&buf, r); err != nil {
+		panic("testutil.CaptureStderr: failed to read stderr: " + err.Error())
+	}
 	os.Stderr = oldStderr
 
 	return buf.String()

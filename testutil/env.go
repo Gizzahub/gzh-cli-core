@@ -14,9 +14,13 @@ func SetEnv(t *testing.T, key, value string) {
 	}
 	t.Cleanup(func() {
 		if existed {
-			os.Setenv(key, old)
+			if err := os.Setenv(key, old); err != nil {
+				t.Logf("warning: failed to restore env %s: %v", key, err)
+			}
 		} else {
-			os.Unsetenv(key)
+			if err := os.Unsetenv(key); err != nil {
+				t.Logf("warning: failed to unset env %s: %v", key, err)
+			}
 		}
 	})
 }
@@ -30,7 +34,9 @@ func UnsetEnv(t *testing.T, key string) {
 	}
 	t.Cleanup(func() {
 		if existed {
-			os.Setenv(key, old)
+			if err := os.Setenv(key, old); err != nil {
+				t.Logf("warning: failed to restore env %s: %v", key, err)
+			}
 		}
 	})
 }
