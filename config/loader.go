@@ -59,6 +59,7 @@ func (l *Loader) Load(dst any) error {
 
 // LoadFrom loads configuration from a specific file path.
 func (l *Loader) LoadFrom(path string, dst any) error {
+	// #nosec G304 -- path is an intentional caller-chosen config location
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read config file %s: %w", path, err)
@@ -104,7 +105,8 @@ func DefaultPaths(appName string) []string {
 
 	// Add XDG config path
 	if configDir := os.Getenv("XDG_CONFIG_HOME"); configDir != "" {
-		paths = append(paths,
+		paths = append(
+			paths,
 			filepath.Join(configDir, appName, "config.yaml"),
 			filepath.Join(configDir, appName, "config.yml"),
 		)
@@ -112,7 +114,8 @@ func DefaultPaths(appName string) []string {
 
 	// Add home directory paths
 	if home, err := os.UserHomeDir(); err == nil {
-		paths = append(paths,
+		paths = append(
+			paths,
 			filepath.Join(home, ".config", appName, "config.yaml"),
 			filepath.Join(home, ".config", appName, "config.yml"),
 			filepath.Join(home, "."+appName+".yaml"),
@@ -132,10 +135,12 @@ func Save(path string, cfg any) error {
 
 	// Ensure parent directory exists
 	dir := filepath.Dir(path)
+	// #nosec G301 -- config dirs are user-local and need group/other read for tooling
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
+	// #nosec G306 -- config files are non-secret YAML; 0644 matches user config norms
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}

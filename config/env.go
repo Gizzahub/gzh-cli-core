@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// EnvPrefix is the default prefix for environment variables.
+// DefaultEnvPrefix is the default prefix for environment variables.
 const DefaultEnvPrefix = "GZH"
 
 // GetEnv returns the value of an environment variable with optional prefix.
