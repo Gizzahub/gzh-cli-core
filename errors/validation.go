@@ -35,7 +35,7 @@ func ValidationErrorf(format string, args ...any) error {
 // RequiredFlag returns a standardized required flag error with optional examples.
 func RequiredFlag(flagName string, examples ...string) error {
 	var msg strings.Builder
-	msg.WriteString(fmt.Sprintf("--%s flag is required", flagName))
+	fmt.Fprintf(&msg, "--%s flag is required", flagName)
 	if len(examples) > 0 {
 		msg.WriteString("\n\nExamples:")
 		for _, ex := range examples {
@@ -61,8 +61,8 @@ func MaxValue(name string, maxValue int) error {
 }
 
 // Range returns an error for values outside a range.
-func Range(name string, min, max int) error {
-	return fmt.Errorf("%s must be between %d and %d", name, min, max)
+func Range(name string, minVal, maxVal int) error {
+	return fmt.Errorf("%s must be between %d and %d", name, minVal, maxVal)
 }
 
 // EmptyValue returns an error for empty values.

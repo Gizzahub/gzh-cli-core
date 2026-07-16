@@ -28,9 +28,11 @@ func TestWrap(t *testing.T) {
 func TestWrap_NilHandling(t *testing.T) {
 	err := New("test error")
 
+	//nolint:errorlint // intentional identity check for nil-passthrough contract
 	if got := Wrap(nil, err); got != err {
 		t.Errorf("Wrap(nil, err) = %v, want %v", got, err)
 	}
+	//nolint:errorlint // intentional identity check for nil-passthrough contract
 	if got := Wrap(err, nil); got != err {
 		t.Errorf("Wrap(err, nil) = %v, want %v", got, err)
 	}
