@@ -11,16 +11,24 @@ import (
 
 // TempDir creates a temporary directory and returns its path.
 // The directory is automatically cleaned up when the test finishes.
+//
+// The path is resolved through symlinks so that it compares equal to os.Getwd()
+// after Chdir: on macOS t.TempDir() returns /var/..., but /var is a symlink to
+// /private/var and Getwd reports the resolved form.
 func TempDir(t *testing.T) string {
 	t.Helper()
-	return t.TempDir()
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatalf("failed to resolve temp directory: %v", err)
+	}
+	return dir
 }
 
 // TempFile creates a temporary file with the given content.
 // Returns the file path. The file is automatically cleaned up.
 func TempFile(t *testing.T, name, content string) string {
 	t.Helper()
-	dir := t.TempDir()
+	dir := TempDir(t)
 	path := filepath.Join(dir, name)
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to create temp file: %v", err)

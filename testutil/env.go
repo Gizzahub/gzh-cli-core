@@ -55,7 +55,7 @@ func Chdir(t *testing.T, dir string) {
 // ChdirTemp creates a temp directory, changes to it, and restores when done.
 func ChdirTemp(t *testing.T) string {
 	t.Helper()
-	dir := t.TempDir()
+	dir := TempDir(t)
 	Chdir(t, dir)
 	return dir
 }
