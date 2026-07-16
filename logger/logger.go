@@ -14,6 +14,7 @@ import (
 // Level represents logging level.
 type Level int
 
+// Log levels from most to least verbose.
 const (
 	LevelDebug Level = iota
 	LevelInfo
@@ -134,14 +135,14 @@ func (l *SimpleLogger) log(level Level, msg string, args ...any) {
 	// Build context string.
 	var contextStr strings.Builder
 	for k, v := range l.context {
-		contextStr.WriteString(fmt.Sprintf(" %s=%v", k, v))
+		fmt.Fprintf(&contextStr, " %s=%v", k, v)
 	}
 
 	// Build args string (key=value pairs).
 	var argsStr strings.Builder
 	for i := 0; i < len(args)-1; i += 2 {
 		if i+1 < len(args) {
-			argsStr.WriteString(fmt.Sprintf(" %v=%v", args[i], args[i+1]))
+			fmt.Fprintf(&argsStr, " %v=%v", args[i], args[i+1])
 		}
 	}
 
@@ -177,14 +178,27 @@ func NewNop() *NopLogger {
 	return &NopLogger{}
 }
 
+// Debug discards the debug message.
 func (l *NopLogger) Debug(msg string, args ...any) {}
-func (l *NopLogger) Info(msg string, args ...any)  {}
-func (l *NopLogger) Warn(msg string, args ...any)  {}
+
+// Info discards the info message.
+func (l *NopLogger) Info(msg string, args ...any) {}
+
+// Warn discards the warning message.
+func (l *NopLogger) Warn(msg string, args ...any) {}
+
+// Error discards the error message.
 func (l *NopLogger) Error(msg string, args ...any) {}
+
+// WithContext returns the same no-op logger.
 func (l *NopLogger) WithContext(key string, value any) Logger {
 	return l
 }
-func (l *NopLogger) SetLevel(level Level)  {}
+
+// SetLevel is a no-op.
+func (l *NopLogger) SetLevel(level Level) {}
+
+// SetOutput is a no-op.
 func (l *NopLogger) SetOutput(w io.Writer) {}
 
 // Ensure interfaces are implemented.
