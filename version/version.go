@@ -6,22 +6,24 @@ import (
 	"runtime"
 )
 
+const unknownValue = "unknown"
+
 // These variables are set at build time via ldflags.
 var (
-	// Version is the semantic version (e.g., "1.0.0")
+	// Version is the semantic version (e.g., "1.0.0").
 	Version = "dev"
-	// GitCommit is the git commit hash
-	GitCommit = "unknown"
-	// BuildDate is the build timestamp
-	BuildDate = "unknown"
+	// GitCommit is the git commit hash.
+	GitCommit = unknownValue
+	// BuildDate is the build timestamp.
+	BuildDate = unknownValue
 )
 
 // Info holds version information.
 type Info struct {
 	Version   string `json:"version" yaml:"version"`
-	GitCommit string `json:"git_commit" yaml:"git_commit"`
-	BuildDate string `json:"build_date" yaml:"build_date"`
-	GoVersion string `json:"go_version" yaml:"go_version"`
+	GitCommit string `json:"git_commit" yaml:"git_commit"` //nolint:tagliatelle // public wire format snake_case contract
+	BuildDate string `json:"build_date" yaml:"build_date"` //nolint:tagliatelle // public wire format snake_case contract
+	GoVersion string `json:"go_version" yaml:"go_version"` //nolint:tagliatelle // public wire format snake_case contract
 	Platform  string `json:"platform" yaml:"platform"`
 }
 
@@ -39,10 +41,10 @@ func Get() Info {
 // String returns a formatted version string.
 func (i Info) String() string {
 	s := fmt.Sprintf("Version:    %s", i.Version)
-	if i.GitCommit != "" && i.GitCommit != "unknown" {
+	if i.GitCommit != "" && i.GitCommit != unknownValue {
 		s += fmt.Sprintf("\nGit Commit: %s", i.GitCommit)
 	}
-	if i.BuildDate != "" && i.BuildDate != "unknown" {
+	if i.BuildDate != "" && i.BuildDate != unknownValue {
 		s += fmt.Sprintf("\nBuild Date: %s", i.BuildDate)
 	}
 	s += fmt.Sprintf("\nGo Version: %s", i.GoVersion)
@@ -55,16 +57,16 @@ func (i Info) Short() string {
 	return i.Version
 }
 
-// Full returns version with git commit (e.g., "1.0.0-abc1234")
+// Full returns version with git commit (e.g., "1.0.0-abc1234").
 func (i Info) Full() string {
-	if i.GitCommit != "" && i.GitCommit != "unknown" && len(i.GitCommit) >= 7 {
+	if i.GitCommit != "" && i.GitCommit != unknownValue && len(i.GitCommit) >= 7 {
 		return fmt.Sprintf("%s-%s", i.Version, i.GitCommit[:7])
 	}
 	return i.Version
 }
 
 // LdFlags returns the ldflags string for building with version info.
-// Usage: go build -ldflags "$(version.LdFlags(pkg, ver, commit, date))"
+// Usage: go build -ldflags "$(version.LdFlags(pkg, ver, commit, date))".
 func LdFlags(pkg, version, gitCommit, buildDate string) string {
 	return fmt.Sprintf("-X %s.Version=%s -X %s.GitCommit=%s -X %s.BuildDate=%s",
 		pkg, version, pkg, gitCommit, pkg, buildDate)
