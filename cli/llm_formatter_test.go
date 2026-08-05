@@ -209,6 +209,91 @@ func TestLLMFormatter_Map(t *testing.T) {
 	}
 }
 
+// renderLLM formats data through the llm output format and returns the bytes.
+func renderLLM(t *testing.T, data any) string {
+	t.Helper()
+
+	var buf bytes.Buffer
+
+	out := NewOutput().SetWriter(&buf).SetFormat("llm")
+	if err := out.Print(data); err != nil {
+		t.Fatalf("Print failed: %v", err)
+	}
+
+	return buf.String()
+}
+
+// assertKeysInOrder checks that keys appear in the output in the given order.
+func assertKeysInOrder(t *testing.T, output string, keys []string) {
+	t.Helper()
+
+	prev := -1
+
+	for _, key := range keys {
+		idx := strings.Index(output, key+":")
+		if idx < 0 {
+			t.Fatalf("key %q missing from output:\n%s", key, output)
+		}
+
+		if idx < prev {
+			t.Errorf("key %q emitted out of sorted order:\n%s", key, output)
+		}
+
+		prev = idx
+	}
+}
+
+func TestLLMFormatter_MapDeterministicOrder(t *testing.T) {
+	type Report struct {
+		Summary map[string]int
+	}
+
+	data := Report{
+		Summary: map[string]int{
+			"has-changes": 1,
+			"clean":       2,
+			"error":       3,
+			"skipped":     4,
+			"ahead":       5,
+			"behind":      6,
+			"diverged":    7,
+			"untracked":   8,
+		},
+	}
+
+	first := renderLLM(t, data)
+
+	// Go randomizes map iteration per range, so an unsorted formatter would
+	// diverge within a handful of renders for an 8-key map.
+	for i := 1; i < 100; i++ {
+		if got := renderLLM(t, data); got != first {
+			t.Fatalf("render %d differs from the first render:\nfirst:\n%s\ngot:\n%s", i, first, got)
+		}
+	}
+
+	assertKeysInOrder(t, first, []string{
+		"ahead", "behind", "clean", "diverged", "error", "has-changes", "skipped", "untracked",
+	})
+}
+
+func TestLLMFormatter_MapNamedKeyType(t *testing.T) {
+	type State string
+
+	type Report struct {
+		Counts map[State]int
+	}
+
+	data := Report{
+		Counts: map[State]int{"dirty": 2, "clean": 1},
+	}
+
+	// Keys are looked up through reflect.Value, so a named key type must not
+	// panic on map indexing.
+	output := renderLLM(t, data)
+
+	assertKeysInOrder(t, output, []string{"clean", "dirty"})
+}
+
 func TestLLMFormatter_TimeFields(t *testing.T) {
 	type Event struct {
 		Name      string

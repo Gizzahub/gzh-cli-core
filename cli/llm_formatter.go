@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 	"unicode"
@@ -173,26 +174,41 @@ func (l *llmFormatter) formatMap(v reflect.Value, depth int) string {
 		return depthEllipsis
 	}
 
-	var sb strings.Builder
-	iter := v.MapRange()
+	// Go randomizes map iteration order. LLM output is consumed by machines,
+	// so identical input must render to identical bytes; emit entries sorted
+	// by their rendered key, falling back to the rendered value when two keys
+	// render alike.
+	type mapEntry struct{ key, value string }
 
-	for iter.Next() {
-		key := iter.Key()
-		value := iter.Value()
+	entries := make([]mapEntry, 0, v.Len())
 
-		keyStr := l.formatValue(key, depth)
-		valueStr := l.formatValue(value, depth+1)
+	for _, key := range v.MapKeys() {
+		valueStr := l.formatValue(v.MapIndex(key), depth+1)
 
 		if valueStr == "" {
 			continue
 		}
 
+		entries = append(entries, mapEntry{key: l.formatValue(key, depth), value: valueStr})
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].key != entries[j].key {
+			return entries[i].key < entries[j].key
+		}
+
+		return entries[i].value < entries[j].value
+	})
+
+	var sb strings.Builder
+
+	for _, entry := range entries {
 		indent := l.indent(depth)
 
-		if strings.Contains(valueStr, "\n") {
-			fmt.Fprintf(&sb, "%s%s:\n%s", indent, keyStr, valueStr)
+		if strings.Contains(entry.value, "\n") {
+			fmt.Fprintf(&sb, "%s%s:\n%s", indent, entry.key, entry.value)
 		} else {
-			fmt.Fprintf(&sb, "%s%s: %s\n", indent, keyStr, valueStr)
+			fmt.Fprintf(&sb, "%s%s: %s\n", indent, entry.key, entry.value)
 		}
 	}
 
