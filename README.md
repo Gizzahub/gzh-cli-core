@@ -2,6 +2,13 @@
 
 Shared core library for gzh-cli-* tools.
 
+## Release status
+
+No release has been tagged yet. The `v0.1.0` compatibility promise begins only
+if that tag is published; current pseudo-versions are development snapshots.
+See the [changelog](CHANGELOG.md), [release-note procedure](docs/release-notes.md),
+and [API compatibility policy](docs/api-compatibility.md).
+
 ## Installation
 
 ```bash
