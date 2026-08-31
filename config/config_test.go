@@ -417,7 +417,21 @@ func TestMustGetEnv(t *testing.T) {
 	})
 
 	t.Run("unset panics with full key", func(t *testing.T) {
-		t.Setenv("GZH_REQUIRED", "")
+		previous, wasSet := os.LookupEnv("GZH_REQUIRED")
+		if err := os.Unsetenv("GZH_REQUIRED"); err != nil {
+			t.Fatalf("Unsetenv() error = %v", err)
+		}
+		t.Cleanup(func() {
+			var err error
+			if wasSet {
+				err = os.Setenv("GZH_REQUIRED", previous)
+			} else {
+				err = os.Unsetenv("GZH_REQUIRED")
+			}
+			if err != nil {
+				t.Errorf("restore GZH_REQUIRED: %v", err)
+			}
+		})
 		defer func() {
 			if recovered := recover(); recovered != "required environment variable not set: GZH_REQUIRED" {
 				t.Errorf("panic = %v, want required-key message", recovered)
