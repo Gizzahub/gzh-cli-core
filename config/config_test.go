@@ -36,6 +36,14 @@ func TestLoader_WithPaths(t *testing.T) {
 	}
 }
 
+func TestLoader_Paths(t *testing.T) {
+	want := []string{"custom.yaml", "other.yaml"}
+	l := NewLoader("myapp").WithPaths(want...)
+	if got := l.Paths(); !slices.Equal(got, want) {
+		t.Errorf("Paths() = %v, want %v", got, want)
+	}
+}
+
 func TestLoader_AddPath(t *testing.T) {
 	l := NewLoader("myapp")
 	originalLen := len(l.paths)
@@ -241,6 +249,21 @@ func TestDefaultPaths(t *testing.T) {
 	}
 }
 
+func TestDefaultPathsIncludesXDGConfigDirectory(t *testing.T) {
+	xdgConfig := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", xdgConfig)
+	paths := DefaultPaths("testapp")
+
+	for _, want := range []string{
+		filepath.Join(xdgConfig, "testapp", "config.yaml"),
+		filepath.Join(xdgConfig, "testapp", "config.yml"),
+	} {
+		if !slices.Contains(paths, want) {
+			t.Errorf("DefaultPaths() = %v, missing %q", paths, want)
+		}
+	}
+}
+
 // Environment variable tests
 
 func TestGetEnv(t *testing.T) {
@@ -257,6 +280,13 @@ func TestGetEnvOr(t *testing.T) {
 	v := GetEnvOr("NONEXISTENT_VAR", "default")
 	if v != "default" {
 		t.Errorf("expected 'default', got '%s'", v)
+	}
+}
+
+func TestGetEnvOrUsesConfiguredValue(t *testing.T) {
+	t.Setenv("GZH_CONFIGURED_VALUE", "configured")
+	if got, want := GetEnvOr("CONFIGURED_VALUE", "default"), "configured"; got != want {
+		t.Errorf("GetEnvOr() = %q, want %q", got, want)
 	}
 }
 
@@ -329,6 +359,18 @@ func TestGetEnvIntOr(t *testing.T) {
 	}
 }
 
+func TestGetEnvOrParsesConfiguredNumbersAndDurations(t *testing.T) {
+	t.Setenv("GZH_CONFIGURED_INT", "42")
+	if got, want := GetEnvIntOr("CONFIGURED_INT", 100), 42; got != want {
+		t.Errorf("GetEnvIntOr() = %d, want %d", got, want)
+	}
+
+	t.Setenv("GZH_CONFIGURED_DURATION", "90s")
+	if got, want := GetEnvDurationOr("CONFIGURED_DURATION", time.Minute), 90*time.Second; got != want {
+		t.Errorf("GetEnvDurationOr() = %s, want %s", got, want)
+	}
+}
+
 func TestGetEnvDuration(t *testing.T) {
 	os.Setenv("GZH_DUR_TEST", "5m30s")
 	defer os.Unsetenv("GZH_DUR_TEST")
@@ -378,6 +420,13 @@ func TestGetEnvListTrimsEmptyEntriesWithNoPrefix(t *testing.T) {
 	}
 }
 
+func TestGetEnvListReturnsNilForEmptyValue(t *testing.T) {
+	t.Setenv("GZH_EMPTY_LIST", "")
+	if got := GetEnvList("EMPTY_LIST"); got != nil {
+		t.Errorf("GetEnvList() = %v, want nil", got)
+	}
+}
+
 func TestGetEnv_CustomPrefix(t *testing.T) {
 	os.Setenv("MYAPP_CUSTOM", "custom_value")
 	defer os.Unsetenv("MYAPP_CUSTOM")
@@ -385,6 +434,18 @@ func TestGetEnv_CustomPrefix(t *testing.T) {
 	v := GetEnv("CUSTOM", "MYAPP")
 	if v != "custom_value" {
 		t.Errorf("expected 'custom_value', got '%s'", v)
+	}
+}
+
+func TestEnvironmentHelpersWithEmptyPrefix(t *testing.T) {
+	t.Setenv("RAW_REQUIRED", "raw-value")
+	t.Setenv("RAW_LOOKUP", "")
+
+	if got, want := MustGetEnv("RAW_REQUIRED", ""), "raw-value"; got != want {
+		t.Errorf("MustGetEnv() = %q, want %q", got, want)
+	}
+	if value, found := LookupEnv("RAW_LOOKUP", ""); !found || value != "" {
+		t.Errorf("LookupEnv() = (%q, %t), want (\"\", true)", value, found)
 	}
 }
 

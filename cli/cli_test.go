@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gizzahub/gzh-cli-core/testutil"
 	"github.com/spf13/cobra"
 )
 
@@ -136,6 +137,38 @@ func TestExecuteWithCode(t *testing.T) {
 	})
 }
 
+func TestAddVersionCmd(t *testing.T) {
+	root := NewRootCmd(RootConfig{Name: "test-app"})
+	info := VersionInfo{
+		Version:   "1.2.3",
+		GitCommit: "abc123",
+		BuildDate: "2026-08-31",
+		GoVersion: "go1.26.7",
+		Platform:  "linux/amd64",
+	}
+	AddVersionCmd(root, info)
+
+	versionCmd, _, err := root.Find([]string{"version"})
+	if err != nil {
+		t.Fatalf("Find(version) error = %v", err)
+	}
+	if got, want := versionCmd.Short, "Print version information"; got != want {
+		t.Errorf("version command Short = %q, want %q", got, want)
+	}
+
+	root.SetArgs([]string{"version"})
+	var executeErr error
+	output := testutil.CaptureStdout(func() {
+		executeErr = root.Execute()
+	})
+	if executeErr != nil {
+		t.Fatalf("Execute() error = %v", executeErr)
+	}
+	if got, want := output, info.String()+"\n"; got != want {
+		t.Errorf("version output = %q, want %q", got, want)
+	}
+}
+
 func TestVersionInfo_String(t *testing.T) {
 	info := VersionInfo{
 		Version:   "1.0.0",
@@ -250,6 +283,26 @@ func TestOutput_InfoAndLine(t *testing.T) {
 
 	if got, want := output.String(), "ℹ ready: yes\nnext\n"; got != want {
 		t.Errorf("output = %q, want %q", got, want)
+	}
+}
+
+func TestPackageOutputHelpers(t *testing.T) {
+	original := defaultOutput
+	var output bytes.Buffer
+	defaultOutput = NewOutput().SetWriter(&output)
+	t.Cleanup(func() {
+		defaultOutput = original
+	})
+
+	Success("done: %d", 1)
+	Error("failed")
+	Warning("careful")
+	Info("ready")
+	DryRun()
+
+	const want = "✓ done: 1\n✗ failed\n⚠ careful\nℹ ready\n[DRY-RUN] No changes will be made\n"
+	if got := output.String(); got != want {
+		t.Errorf("package output = %q, want %q", got, want)
 	}
 }
 
