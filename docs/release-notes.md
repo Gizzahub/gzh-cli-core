@@ -31,7 +31,7 @@ unresolved until tag and publication approval is given.
 
 <user-visible summary>
 
-### Added / Changed / Fixed / Security
+### Added / Changed / Deprecated / Removed / Fixed / Security
 
 <grouped entries from Unreleased>
 
