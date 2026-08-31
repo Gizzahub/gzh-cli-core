@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 )
@@ -85,6 +86,30 @@ timeout: 30s`
 	}
 }
 
+func TestLoader_LoadFromErrors(t *testing.T) {
+	l := NewLoader("myapp")
+
+	t.Run("missing file", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "missing.yaml")
+		err := l.LoadFrom(path, &testConfig{})
+		if err == nil || !strings.Contains(err.Error(), "failed to read config file "+path) {
+			t.Fatalf("LoadFrom() error = %v, want read error for %q", err, path)
+		}
+	})
+
+	t.Run("malformed YAML", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "malformed.yaml")
+		if err := os.WriteFile(path, []byte("name: ["), 0o644); err != nil {
+			t.Fatalf("WriteFile() error = %v", err)
+		}
+
+		err := l.LoadFrom(path, &testConfig{})
+		if err == nil || !strings.Contains(err.Error(), "failed to parse config file "+path) {
+			t.Fatalf("LoadFrom() error = %v, want parse error for %q", err, path)
+		}
+	})
+}
+
 func TestLoader_Load(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "myapp.yaml")
@@ -134,6 +159,26 @@ func TestLoader_LoadOrDefault(t *testing.T) {
 	}
 }
 
+func TestLoader_LoadOrDefaultLoadsFirstExistingPath(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.yaml")
+	if err := os.WriteFile(configPath, []byte("name: configured\nport: 8080\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	l := NewLoader("myapp").WithPaths(filepath.Join(dir, "missing.yaml"), configPath)
+	cfg := testConfig{Name: "default", Port: 3000}
+	if err := l.LoadOrDefault(&cfg); err != nil {
+		t.Fatalf("LoadOrDefault() error = %v", err)
+	}
+	if got, want := cfg.Name, "configured"; got != want {
+		t.Errorf("Name = %q, want %q", got, want)
+	}
+	if got, want := cfg.Port, 8080; got != want {
+		t.Errorf("Port = %d, want %d", got, want)
+	}
+}
+
 func TestLoader_FindConfigFile(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "found.yaml")
@@ -148,6 +193,13 @@ func TestLoader_FindConfigFile(t *testing.T) {
 	}
 	if path != configPath {
 		t.Errorf("expected path '%s', got '%s'", configPath, path)
+	}
+}
+
+func TestLoader_FindConfigFileNotFound(t *testing.T) {
+	l := NewLoader("app").WithPaths(filepath.Join(t.TempDir(), "missing.yaml"))
+	if path, found := l.FindConfigFile(); found || path != "" {
+		t.Errorf("FindConfigFile() = (%q, %t), want (\"\", false)", path, found)
 	}
 }
 
@@ -234,6 +286,29 @@ func TestGetEnvBool(t *testing.T) {
 	os.Unsetenv("GZH_BOOL_TEST")
 }
 
+func TestGetEnvBoolOr(t *testing.T) {
+	tests := []struct {
+		name         string
+		value        string
+		defaultValue bool
+		want         bool
+	}{
+		{name: "unset uses default", defaultValue: true, want: true},
+		{name: "recognized true", value: "yes", want: true},
+		{name: "recognized false", value: "false", defaultValue: true, want: false},
+		{name: "invalid is false", value: "not-a-bool", defaultValue: true, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("GZH_BOOL_OR_TEST", tt.value)
+			if got := GetEnvBoolOr("BOOL_OR_TEST", tt.defaultValue); got != tt.want {
+				t.Errorf("GetEnvBoolOr() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestGetEnvInt(t *testing.T) {
 	os.Setenv("GZH_INT_TEST", "42")
 	defer os.Unsetenv("GZH_INT_TEST")
@@ -268,6 +343,21 @@ func TestGetEnvDuration(t *testing.T) {
 	}
 }
 
+func TestGetEnvNumericAndDurationInvalidValues(t *testing.T) {
+	t.Setenv("GZH_INT_INVALID", "not-an-int")
+	if value, ok := GetEnvInt("INT_INVALID"); ok || value != 0 {
+		t.Errorf("GetEnvInt() = (%d, %t), want (0, false)", value, ok)
+	}
+
+	t.Setenv("GZH_DURATION_INVALID", "not-a-duration")
+	if value, ok := GetEnvDuration("DURATION_INVALID"); ok || value != 0 {
+		t.Errorf("GetEnvDuration() = (%s, %t), want (0s, false)", value, ok)
+	}
+	if got, want := GetEnvDurationOr("DURATION_INVALID", time.Minute), time.Minute; got != want {
+		t.Errorf("GetEnvDurationOr() = %s, want %s", got, want)
+	}
+}
+
 func TestGetEnvList(t *testing.T) {
 	os.Setenv("GZH_LIST_TEST", "a, b, c")
 	defer os.Unsetenv("GZH_LIST_TEST")
@@ -278,6 +368,13 @@ func TestGetEnvList(t *testing.T) {
 	}
 	if list[0] != "a" || list[1] != "b" || list[2] != "c" {
 		t.Errorf("unexpected list: %v", list)
+	}
+}
+
+func TestGetEnvListTrimsEmptyEntriesWithNoPrefix(t *testing.T) {
+	t.Setenv("LIST_WITHOUT_PREFIX", " first, , second ,, ")
+	if got, want := GetEnvList("LIST_WITHOUT_PREFIX", ""), []string{"first", "second"}; !slices.Equal(got, want) {
+		t.Errorf("GetEnvList() = %v, want %v", got, want)
 	}
 }
 
@@ -309,4 +406,23 @@ func TestLookupEnv(t *testing.T) {
 	if ok {
 		t.Error("expected ok to be false for unset var")
 	}
+}
+
+func TestMustGetEnv(t *testing.T) {
+	t.Run("set", func(t *testing.T) {
+		t.Setenv("GZH_REQUIRED", "value")
+		if got, want := MustGetEnv("REQUIRED"), "value"; got != want {
+			t.Errorf("MustGetEnv() = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("unset panics with full key", func(t *testing.T) {
+		t.Setenv("GZH_REQUIRED", "")
+		defer func() {
+			if recovered := recover(); recovered != "required environment variable not set: GZH_REQUIRED" {
+				t.Errorf("panic = %v, want required-key message", recovered)
+			}
+		}()
+		MustGetEnv("REQUIRED")
+	})
 }

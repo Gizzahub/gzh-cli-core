@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 
@@ -57,6 +58,24 @@ func TestDryRunFlags(t *testing.T) {
 	}
 }
 
+func TestConfirmFlags_ParseLongAndShort(t *testing.T) {
+	for _, arg := range []string{"--yes", "-y"} {
+		t.Run(arg, func(t *testing.T) {
+			cmd := &cobra.Command{Use: "test"}
+			flags := &ConfirmFlags{}
+			AddConfirmFlags(cmd, flags)
+			cmd.SetArgs([]string{arg})
+
+			if err := cmd.Execute(); err != nil {
+				t.Fatalf("Execute() error = %v", err)
+			}
+			if !flags.Yes {
+				t.Fatalf("%s did not set ConfirmFlags.Yes", arg)
+			}
+		})
+	}
+}
+
 func TestNewRootCmd(t *testing.T) {
 	cmd := NewRootCmd(RootConfig{
 		Name:    "test-app",
@@ -71,6 +90,50 @@ func TestNewRootCmd(t *testing.T) {
 	if cmd.Version != "1.0.0" {
 		t.Errorf("expected Version '1.0.0', got '%s'", cmd.Version)
 	}
+}
+
+func TestNewRootCmdVersionBehavior(t *testing.T) {
+	t.Run("custom template", func(t *testing.T) {
+		cmd := NewRootCmd(RootConfig{
+			Name:            "test-app",
+			Version:         "1.2.3",
+			VersionTemplate: "release {{.Version}}\n",
+		})
+		var output bytes.Buffer
+		cmd.SetOut(&output)
+		cmd.SetArgs([]string{"--version"})
+
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		if got, want := output.String(), "release 1.2.3\n"; got != want {
+			t.Errorf("version output = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("no version", func(t *testing.T) {
+		cmd := NewRootCmd(RootConfig{Name: "test-app"})
+		if cmd.Version != "" {
+			t.Errorf("Version = %q, want empty", cmd.Version)
+		}
+	})
+}
+
+func TestExecuteWithCode(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		cmd := &cobra.Command{RunE: func(*cobra.Command, []string) error { return nil }}
+		if got := ExecuteWithCode(cmd); got != 0 {
+			t.Errorf("ExecuteWithCode() = %d, want 0", got)
+		}
+	})
+
+	t.Run("command error", func(t *testing.T) {
+		cmd := &cobra.Command{RunE: func(*cobra.Command, []string) error { return errors.New("test failure") }}
+		cmd.SetErr(&bytes.Buffer{})
+		if got := ExecuteWithCode(cmd); got != 1 {
+			t.Errorf("ExecuteWithCode() = %d, want 1", got)
+		}
+	})
 }
 
 func TestVersionInfo_String(t *testing.T) {
@@ -159,6 +222,34 @@ func TestOutput_YAML(t *testing.T) {
 
 	if !strings.Contains(buf.String(), "key:") {
 		t.Error("expected YAML key in output")
+	}
+}
+
+func TestOutput_PrintTextFallback(t *testing.T) {
+	for _, format := range []string{"text", "TEXT", "unknown"} {
+		t.Run(format, func(t *testing.T) {
+			var output bytes.Buffer
+			out := NewOutput().SetWriter(&output).SetFormat(format)
+
+			if err := out.Print("message"); err != nil {
+				t.Fatalf("Print() error = %v", err)
+			}
+			if got, want := output.String(), "message\n"; got != want {
+				t.Errorf("Print() output = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestOutput_InfoAndLine(t *testing.T) {
+	var output bytes.Buffer
+	out := NewOutput().SetWriter(&output)
+
+	out.Info("ready: %s", "yes")
+	out.Line("next")
+
+	if got, want := output.String(), "ℹ ready: yes\nnext\n"; got != want {
+		t.Errorf("output = %q, want %q", got, want)
 	}
 }
 
