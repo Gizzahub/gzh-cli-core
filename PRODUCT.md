@@ -3,7 +3,7 @@
 **Project**: gzh-cli-core
 **Doc Type**: Goals + Constraints + Quality Gates
 **Status**: Active
-**Last Updated**: 2026-07-16
+**Last Updated**: 2026-08-31
 
 ______________________________________________________________________
 
@@ -75,7 +75,9 @@ ______________________________________________________________________
 
 **Compatibility**
 
-- Go 1.25+ (`go.mod` go 1.25.7; devbox 툴체인 1.26); CGO 미사용
+- 소비자 최소 Go 1.26 (`go.mod` directive); 개발·CI toolchain Go 1.26.7; CGO 미사용.
+  소비자 하한 또는 toolchain directive 변경은 공개 release policy 변경이므로 release owner
+  결정이 필요하다.
 
 **Safety**
 
@@ -83,7 +85,8 @@ ______________________________________________________________________
 
 **Baseline (진행 중)**
 
-- 현재 `Makefile`·`.golangci.yml` 미보유 (GUIDELINES §4 격차) — 다음 작업 시 보완
+- `Makefile`·`.golangci.yml`을 보유한다. `make check`은 fmt·lint·race test를 실행하며,
+  build·vet·format-only 검증은 각각 `make build`·`make vet`·`make fmt-check`으로 수행한다.
 
 ______________________________________________________________________
 
@@ -91,12 +94,11 @@ ______________________________________________________________________
 
 **Build and Lint**
 
-- `go build ./...` 성공, `gofmt -l` 무결과, `go vet ./...` 통과
-  (Makefile·golangci 도입 후 `make lint`로 상향)
+- `make check`(fmt·lint·race test), `make build`, `make vet`, `make fmt-check` 통과
 
 **Testing**
 
-- `go test ./... -cover` pass; 커버리지 >= 85%
+- `make check`의 race test pass; 전체 커버리지 >= 85%
 
 **Compatibility**
 

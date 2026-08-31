@@ -8,7 +8,8 @@ This file provides LLM-optimized guidance for Claude Code when working with this
 
 **Module**: `github.com/gizzahub/gzh-cli-core`
 **Type**: Shared library for gzh-cli-* tools
-**Go Version**: 1.24+
+**Consumer Go Version**: 1.26 (`go.mod` directive)
+**Development / CI Toolchain**: 1.26.7
 
 ### Purpose
 
@@ -123,4 +124,4 @@ import (
 
 ---
 
-**Last Updated**: 2024-12-05
+**Last Updated**: 2026-08-31
