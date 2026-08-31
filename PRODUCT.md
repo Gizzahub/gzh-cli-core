@@ -75,9 +75,10 @@ ______________________________________________________________________
 
 **Compatibility**
 
-- 소비자 최소 Go 1.26 (`go.mod` directive); 개발·CI toolchain Go 1.26.7; CGO 미사용.
-  소비자 하한 또는 toolchain directive 변경은 공개 release policy 변경이므로 release owner
-  결정이 필요하다.
+- 소비자 최소 Go 1.26 (`go.mod`의 `go` directive); CGO 미사용. `toolchain go1.26.7`은
+  이 모듈을 main module로 개발할 때의 권장 toolchain이며 CI도 1.26.7로 고정한다.
+  소비자 하한 변경은 compatibility review 대상이고, toolchain 변경은 소비자 계약이 아니라
+  개발·CI 재현성 관점에서 검토한다.
 
 **Safety**
 
