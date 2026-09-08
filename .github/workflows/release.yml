@@ -1,0 +1,93 @@
+# Publishes a GitHub Release when a v-tag is pushed. It never creates a tag:
+# pushing the tag is the human decision this workflow reacts to, and TASK-077
+# keeps that decision behind its own approval.
+#
+# gzh-cli-core is a library, so there is nothing to build and upload. What a
+# release has to guarantee instead is that the tagged revision is the one the
+# gates passed and that its notes exist -- both are checked here, fail-closed,
+# before anything is published.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+# Read-only by default. Only the publish job widens this, and only to contents.
+permissions:
+  contents: read
+
+jobs:
+  # The tag is a different ref from the branch CI ran on: a tag can point at any
+  # commit, including one that never reached master. Re-running the gates against
+  # the tag itself is the only thing that ties "released" to "verified".
+  verify:
+    name: Verify tagged revision
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.7'
+          cache: true
+          # Same reason as ci.yml: setup-go v6 moved the default cache key to
+          # go.mod, which goes stale when a transitive dependency moves.
+          cache-dependency-path: go.sum
+      - name: Test
+        run: go test -race ./...
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  # docs/release-notes.md requires a version section before publication and says
+  # the Unreleased heading stays until publication is approved. That requirement
+  # is enforced here rather than trusted: a tag whose notes are still Unreleased
+  # stops the release instead of publishing an empty one.
+  notes:
+    name: Extract release notes
+    runs-on: ubuntu-latest
+    outputs:
+      body: ${{ steps.extract.outputs.body }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Extract the tag's CHANGELOG section
+        id: extract
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          # Everything between this version's heading and the next ## heading.
+          body="$(awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { inside = 1; next }
+            inside && /^## / { exit }
+            inside { print }
+          ' CHANGELOG.md)"
+          if [ -z "$(printf '%s' "$body" | tr -d '[:space:]')" ]; then
+            echo "::error::CHANGELOG.md has no non-empty '## [$version]' section." >&2
+            echo "Add the version section before tagging; see docs/release-notes.md." >&2
+            exit 1
+          fi
+          {
+            echo "body<<CHANGELOG_EOF"
+            printf '%s\n' "$body"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publish release
+    needs: [verify, notes]
+    runs-on: ubuntu-latest
+    # The only job that writes, and the only permission it needs.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          NOTES: ${{ needs.notes.outputs.body }}
+        run: gh release create "$TAG" --title "$TAG" --notes "$NOTES" --verify-tag
