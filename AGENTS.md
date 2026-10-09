@@ -1,4 +1,4 @@
-# CLAUDE.md
+# gzh-cli-core
 
 This file provides LLM-optimized guidance for Claude Code when working with this repository.
 
@@ -65,45 +65,6 @@ go fmt ./...
 
 ```
 {type}({scope}): {description}
-
-Model: claude-{model}
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-## Project Structure
-
-```
-gzh-cli-core/
-├── logger/          # Structured logging
-│   ├── logger.go    # Logger interface & SimpleLogger
-│   ├── global.go    # Default logger functions
-│   └── logger_test.go
-├── testutil/        # Test utilities
-│   ├── testutil.go  # TempDir, Capture
-│   ├── assert.go    # Assertions
-│   ├── env.go       # SetEnv, Chdir
-│   └── testutil_test.go
-├── errors/          # Error handling
-│   ├── errors.go    # Core error types & wrapping
-│   ├── validation.go # Validation error helpers
-│   └── errors_test.go
-├── config/          # Configuration
-│   ├── loader.go    # YAML config loader
-│   ├── env.go       # Environment variable helpers
-│   └── config_test.go
-├── cli/             # CLI utilities
-│   ├── flags.go     # Common flag sets
-│   ├── root.go      # Root command helpers
-│   ├── output.go    # Output formatting
-│   └── cli_test.go
-├── version/         # Version info
-│   ├── version.go   # Version struct & Get()
-│   └── version_test.go
-├── go.mod
-├── README.md
-└── CLAUDE.md
 ```
 
 ---
