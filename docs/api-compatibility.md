@@ -8,7 +8,7 @@ published, every exported declaration in that tagged source becomes the initial
 public API baseline for `github.com/gizzahub/gzh-cli-core`.
 
 The module's `go 1.26` directive is the consumer minimum Go version. The
-`toolchain go1.26.7` directive and the CI pin are preferred development and CI
+`toolchain go1.27.3` directive and the CI pin are preferred development and CI
 settings, not a consumer compatibility floor.
 
 ## Public packages
