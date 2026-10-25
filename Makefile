@@ -40,7 +40,7 @@ lint: ## Run golangci-lint
 	@command -v golangci-lint >/dev/null 2>&1 || { echo "golangci-lint not installed" >&2; exit 1; }
 	golangci-lint run ./...
 
-check: fmt lint test ## Run all quality checks (fmt + lint + test)
+check: fmt-check-test fmt lint test ## Run regression and quality checks (fmt + lint + test)
 	@echo "All quality checks passed"
 
 clean: ## Remove test and coverage artifacts

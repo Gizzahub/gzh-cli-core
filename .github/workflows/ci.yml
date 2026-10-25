@@ -21,6 +21,8 @@ jobs:
           # would serve a stale module cache. Pinning it back to go.sum keeps the
           # key as precise as it was on v5.
           cache-dependency-path: go.sum
+      - name: Test Make formatting contract
+        run: make fmt-check-test
       - name: Test
         run: go test -race ./...
 

@@ -1,7 +1,7 @@
 # .make/quality.mk - Extended quality targets
 # Included by main Makefile. Baseline `fmt` `lint` `check` live in the root Makefile.
 
-.PHONY: vet fmt-check lint-check security tidy
+.PHONY: vet fmt-check fmt-check-test lint-check security tidy
 
 vet: ## Run go vet
 	@echo "Running go vet..."
@@ -9,8 +9,16 @@ vet: ## Run go vet
 
 fmt-check: ## Check formatting without writing (for CI)
 	@echo "Checking code format..."
-	@test -z "$$(gofmt -l .)" || { echo "Code is not formatted. Run: make fmt"; exit 1; }
+	@unformatted="$$(gofmt -l .)" || exit $$?; \
+	if [ -n "$$unformatted" ]; then \
+		printf '%s\n' "$$unformatted"; \
+		echo "Code is not formatted. Run: make fmt" >&2; \
+		exit 1; \
+	fi
 	@echo "Code is properly formatted"
+
+fmt-check-test: ## Verify formatting check success and error propagation
+	@/bin/sh .make/test-fmt-check.sh
 
 lint-check: ## Run lint without fixing (for CI)
 	@echo "Checking lint..."
