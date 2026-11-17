@@ -29,7 +29,7 @@ This file provides LLM-optimized guidance for Claude Code when working with this
 **Module**: `github.com/gizzahub/gzh-cli-core`
 **Type**: Shared library for gzh-cli-* tools
 **Consumer Go Version**: 1.26 (`go.mod` directive)
-**Preferred Development / CI Toolchain**: 1.27.3 (main module directive / CI pin; not a consumer floor)
+**Preferred Development / CI Toolchain**: 1.27.4 (main module directive / CI pin; not a consumer floor)
 
 ### Purpose
 
